@@ -8,9 +8,15 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    public function me()
+    {
+        return JWTAuth::parseToken()->authenticate();
+    }
+
     public function authenticate(AuthenticateRequest $request)
     {
         $credentials = $request->only(['email', 'password']);
