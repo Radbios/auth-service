@@ -7,55 +7,93 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+# Auth Service - Sistema de E-commerce com Microsserviços
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Este microsserviço é responsável pela autenticação de usuários, utilizando **JWT (JSON Web Tokens)** como mecanismo de segurança. Ele provê endpoints de login, logout e recuperação de dados do usuário autenticado. Toda a autenticação do sistema passa por este serviço, sendo fundamental para proteger os demais microsserviços.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Funcionalidades
 
-## Learning Laravel
+* Login de usuários com email e senha
+* Geração de token JWT
+* Retorno do usuário autenticado a partir do token
+* Logout (invalidação do token atual)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Integração com o sistema
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Este serviço é acessado indiretamente pelos demais microsserviços por meio do token gerado, que deve ser incluído no header `Authorization: Bearer <token>`. Ele também pode ser acessado diretamente via API Gateway para operações de autenticação.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Rotas disponíveis
 
-## Laravel Sponsors
+### POST `/api/service/auth/login`
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Autentica o usuário e gera um token JWT.
 
-### Premium Partners
+**Corpo da requisição:**
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+```json
+{
+  "email": "usuario@example.com",
+  "password": "senha123"
+}
+```
 
-## Contributing
+**Resposta de sucesso:**
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJh...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "user": {
+    "id": 1,
+    "name": "Usuário Exemplo",
+    "email": "usuario@example.com"
+  }
+}
+```
 
-## Code of Conduct
+### GET `/api/service/auth/me`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Retorna os dados do usuário autenticado com base no token JWT.
 
-## Security Vulnerabilities
+**Cabeçalho:**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+Authorization: Bearer <token>
+```
 
-## License
+### POST `/api/service/auth/logout`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Invalida o token atual e encerra a sessão.
+
+**Resposta de sucesso:**
+
+```json
+{
+  "message": "Deslogado com sucesso!"
+}
+```
+
+## Estrutura e arquivos principais
+
+| Arquivo                   | Descrição                                                              |
+| ------------------------- | ---------------------------------------------------------------------- |
+| `AuthController.php`      | Controlador com os métodos de login, logout e identificação de usuário |
+| `AuthenticateRequest.php` | Valida os dados do formulário de login                                 |
+| `config/auth.php`         | Define os guards de autenticação e o uso do driver JWT                 |
+| `bootstrap/app.php`       | Registra middleware personalizado e configura as rotas do serviço      |
+
+## Requisitos
+
+* Laravel 11
+* PHP 8.2+
+* Biblioteca `tymon/jwt-auth` para autenticação JWT
+* Middleware de autenticação configurado com o guard `api`
+
+## Observações
+
+Este serviço é fundamental para garantir a segurança de todos os microsserviços da aplicação. Apenas usuários autenticados com token válido poderão acessar as funcionalidades protegidas, como gerenciamento de carrinho, pedidos e pagamentos.
+
+---
